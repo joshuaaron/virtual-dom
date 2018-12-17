@@ -1,4 +1,4 @@
-// Translate our virtual dom elements to real DOM elements.
+// Translate our virtual dom elements to real DOM Nodes.
 const render = vNode => {
   if (typeof vNode === "string") {
     return document.createTextNode(vNode);
@@ -15,7 +15,7 @@ const renderElem = ({ tagName, attrs, children }) => {
     $el.setAttribute(k, v);
   }
 
-  // append all children
+  // append all children recursively.
   for (const child of children) {
     $el.appendChild(render(child));
   }

@@ -10,6 +10,7 @@ const zip = (arr1, arr2) => {
 	return zipped;
 };
 
+// Method to diff the attributes of the old virtual dom and the new virtual dom.
 const diffAttrs = (oldAttrs, newAttrs) => {
 	const patches = [];
 
@@ -40,14 +41,16 @@ const diffAttrs = (oldAttrs, newAttrs) => {
 	};
 };
 
+// Method to diff the children of the old virtual dom and the new virtual dom.
 const diffChildren = (oldVChildren, newVChildren) => {
-	// go through all the old/new children up to the oldchildren length and diff them
+	// loop through all children up to the oldchildren length. to check changes
 	const childPatches = [];
 	oldVChildren.forEach((oldVChild, i) => {
 		childPatches.push(diff(oldVChild, newVChildren[i]));
 	});
 
-	// if there are additional children past oldChildren length,
+	// slice the newchildren array from the length of oldchildren since they are diffed in the previous method, then for each
+	// additional child, create the functions that will append the child once ran through render (create real dom nodes)
 	const additionalPatches = [];
 	for (const additionalVChild of newVChildren.slice(oldVChildren.length)) {
 		additionalPatches.push($node => {
@@ -56,9 +59,9 @@ const diffChildren = (oldVChildren, newVChildren) => {
 		});
 	}
 
+	// since childPatches methods are expecting the $child, not $parent, we will get the childnodes for the parent and use the zip
+	// method to return the matching patch as per index.
 	return $parent => {
-		// since childPatches are expecting the $child, not $parent, $parent childnodes gives nodelist of elements
-		// we cannot just loop through them and call patch($parent)
 		for (const [patch, $child] of zip(childPatches, $parent.childNodes)) {
 			patch($child);
 		}
@@ -76,8 +79,7 @@ const diff = (oldVTree, newVTree) => {
 	if (newVTree === undefined) {
 		return $node => {
 			$node.remove();
-			// the patch should return the new root node.
-			// since there is none in this case,
+			// the patch should return the new root node. since there is none in this case,
 			// we will just return undefined.
 			return undefined;
 		};
@@ -95,15 +97,15 @@ const diff = (oldVTree, newVTree) => {
 				return $newNode;
 			};
 		}
+		// this means that both trees are string and they have the same values
 		else {
-			// this means that both trees are string and they have the same values
 			return $node => $node;
 		}
 	}
 
+	// we assume that they are totally different and will not attempt to find the differences.
+	// simply render the newVTree and mount it.
 	if (oldVTree.tagName !== newVTree.tagName) {
-		// we assume that they are totally different and will not attempt to find the differences.
-		// simply render the newVTree and mount it.
 		return $node => {
 			const $newNode = render(newVTree);
 			$node.replaceWith($newNode);

@@ -112,7 +112,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
-// allow for creating elements without any options
+// allow for creating elements without any options with default params.
 var _default = function _default(tagName) {
   var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
       _ref$attrs = _ref.attrs,
@@ -147,7 +147,7 @@ function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = 
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
-// Translate our virtual dom elements to real DOM elements.
+// Translate our virtual dom elements to real DOM Nodes.
 var render = function render(vNode) {
   if (typeof vNode === "string") {
     return document.createTextNode(vNode);
@@ -171,7 +171,7 @@ var renderElem = function renderElem(_ref) {
         v = _arr$_i[1];
 
     $el.setAttribute(k, v);
-  } // append all children
+  } // append all children recursively.
 
 
   var _iteratorNormalCompletion = true;
@@ -247,7 +247,8 @@ var zip = function zip(arr1, arr2) {
   }
 
   return zipped;
-};
+}; // Method to diff the attributes of the old virtual dom and the new virtual dom.
+
 
 var diffAttrs = function diffAttrs(oldAttrs, newAttrs) {
   var patches = []; // setting newAttrs
@@ -281,7 +282,8 @@ var diffAttrs = function diffAttrs(oldAttrs, newAttrs) {
 
   for (var k in oldAttrs) {
     _loop(k);
-  }
+  } // once called with $node, loop through all patches and return the updated node.
+
 
   return function ($node) {
     for (var _i2 = 0; _i2 < patches.length; _i2++) {
@@ -291,18 +293,16 @@ var diffAttrs = function diffAttrs(oldAttrs, newAttrs) {
 
     return $node;
   };
-};
+}; // Method to diff the children of the old virtual dom and the new virtual dom.
+
 
 var diffChildren = function diffChildren(oldVChildren, newVChildren) {
-  // go through all the old/new children up to the oldchildren length and diff them
+  // loop through all children up to the oldchildren length. to check changes
   var childPatches = [];
   oldVChildren.forEach(function (oldVChild, i) {
     childPatches.push(diff(oldVChild, newVChildren[i]));
-  });
-  /**
-   
-   */
-  // if there are additional children past oldChildren length,
+  }); // slice the newchildren array from the length of oldchildren since they are diffed in the previous method, then for each
+  // additional child, create the functions that will append the child once ran through render (create real dom nodes)
 
   var additionalPatches = [];
   var _iteratorNormalCompletion = true;
@@ -320,7 +320,9 @@ var diffChildren = function diffChildren(oldVChildren, newVChildren) {
 
     for (var _iterator = newVChildren.slice(oldVChildren.length)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
       _loop3();
-    }
+    } // since childPatches methods are expecting the $child, not $parent, we will get the childnodes for the parent and use the zip
+    // method to return the matching patch as per index.
+
   } catch (err) {
     _didIteratorError = true;
     _iteratorError = err;
@@ -337,8 +339,6 @@ var diffChildren = function diffChildren(oldVChildren, newVChildren) {
   }
 
   return function ($parent) {
-    // since childPatches are expecting the $child, not $parent, $parent childnodes gives nodelist of elements
-    // we cannot just loop through them and call patch($parent)
     var _iteratorNormalCompletion2 = true;
     var _didIteratorError2 = false;
     var _iteratorError2 = undefined;
@@ -380,8 +380,7 @@ var diff = function diff(oldVTree, newVTree) {
   // let's assume oldVTree is not undefined!
   if (newVTree === undefined) {
     return function ($node) {
-      $node.remove(); // the patch should return the new root node.
-      // since there is none in this case,
+      $node.remove(); // the patch should return the new root node. since there is none in this case,
       // we will just return undefined.
 
       return undefined;
@@ -392,27 +391,24 @@ var diff = function diff(oldVTree, newVTree) {
     if (oldVTree !== newVTree) {
       // could be 2 cases:
       // 1. both trees are string and they have different values
-      // 2. one of the trees is text node and
-      //    the other one is elem node
+      // 2. one of the trees is text node and the other one is elem node
       // Either case, we will just render(newVTree)!
       return function ($node) {
         var $newNode = (0, _render.default)(newVTree);
         $node.replaceWith($newNode);
         return $newNode;
       };
-    } else {
-      // this means that both trees are string
-      // and they have the same values
-      return function ($node) {
-        return $node;
-      };
-    }
-  }
+    } // this means that both trees are string and they have the same values
+    else {
+        return function ($node) {
+          return $node;
+        };
+      }
+  } // we assume that they are totally different and will not attempt to find the differences.
+  // simply render the newVTree and mount it.
+
 
   if (oldVTree.tagName !== newVTree.tagName) {
-    // we assume that they are totally different and
-    // will not attempt to find the differences.
-    // simply render the newVTree and mount it.
     return function ($node) {
       var $newNode = (0, _render.default)(newVTree);
       $node.replaceWith($newNode);
@@ -452,7 +448,7 @@ function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.
 
 function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
 
-var createVApp = function createVApp(count) {
+var createVirtualApp = function createVirtualApp(count) {
   return (0, _createElement.default)("div", {
     attrs: {
       id: "app",
@@ -471,20 +467,24 @@ var createVApp = function createVApp(count) {
       });
     })))
   });
-};
+}; // create the initial object representation of dom elements including root tag name, it's attributes and children;
 
-var vApp = createVApp(0);
-var $app = (0, _render.default)(vApp);
+
+var virtualApp = createVirtualApp(0); // create the initial dom elements.
+
+var $app = (0, _render.default)(virtualApp); // mount the initial dom elements.
+
 var $rootEl = (0, _mount.default)($app, document.getElementById("app"));
 setInterval(function () {
-  var n = Math.floor(Math.random() * 10);
-  var vNewApp = createVApp(n);
-  var patch = (0, _diff.default)(vApp, vNewApp); // we might replace the whole $rootEl,
-  // so we want the patch will return the new $rootEl
+  var n = Math.floor(Math.random() * 10); // create the new object representation of dom elements
+
+  var updatedVirtualApp = createVirtualApp(n); // diff the two virtual representations and store the patches to be made
+
+  var patch = (0, _diff.default)(virtualApp, updatedVirtualApp); // Apply the patches.
 
   $rootEl = patch($rootEl);
-  vApp = vNewApp;
-}, 2000);
+  virtualApp = updatedVirtualApp;
+}, 4000);
 },{"./config/createElement":"src/config/createElement.js","./config/render":"src/config/render.js","./config/mount":"src/config/mount.js","./config/diff":"src/config/diff.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
@@ -512,7 +512,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55665" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "63740" + '/');
 
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);

@@ -3,7 +3,7 @@ import render from "./config/render";
 import mount from "./config/mount";
 import diff from "./config/diff";
 
-const createVApp = count =>
+const createVirtualApp = count =>
   createElement("div", {
     attrs: {
       id: "app",
@@ -28,18 +28,23 @@ const createVApp = count =>
     ]
   });
 
-let vApp = createVApp(0);
-const $app = render(vApp);
+// create the initial object representation of dom elements including root tag name, it's attributes and children;
+let virtualApp = createVirtualApp(0);
+
+// create the initial dom elements.
+const $app = render(virtualApp);
+
+// mount the initial dom elements.
 let $rootEl = mount($app, document.getElementById("app"));
 
 setInterval(() => {
-  const n = Math.floor(Math.random() * 10);
-  const vNewApp = createVApp(n);
-  const patch = diff(vApp, vNewApp);
+	const n = Math.floor(Math.random() * 10);
+	// create the new object representation of dom elements
+	const updatedVirtualApp = createVirtualApp(n);
+	// diff the two virtual representations and store the patches to be made
+	const patch = diff(virtualApp, updatedVirtualApp);
+	// Apply the patches.
+	$rootEl = patch($rootEl);
 
-  // we might replace the whole $rootEl,
-  // so we want the patch will return the new $rootEl
-  $rootEl = patch($rootEl);
-
-  vApp = vNewApp;
-}, 2000);
+	virtualApp = updatedVirtualApp;
+}, 3000);
